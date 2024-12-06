@@ -27,7 +27,7 @@ Antes de executar o projeto, você precisa ter o **Python** instalado em sua má
 Após instalar o Python, você pode instalar as dependências do projeto. No terminal, navegue até o diretório do projeto e execute o seguinte comando para instalar as bibliotecas necessárias:
 
 ```bash
-pip install -r requirements.txt
+pip install ttkbootstrap
 ```
 ### Execução do Arquivo
 
