@@ -1,6 +1,6 @@
 # Simulador de AFD (Autômato Finito Determinístico)
 
-Este projeto é um simulador de Autômatos Finitos Determinísticos (AFD) desenvolvido em Python utilizando a biblioteca `Tkinter` e o framework `ttkbootstrap`. O aplicativo permite ao usuário configurar um AFD, testar cadeias de entrada e visualizar os resultados de forma interativa. O sistema é dividido em várias páginas, permitindo uma navegação fácil entre as diferentes funcionalidades.
+Este projeto é um simulador de Autômatos Finitos Determinísticos (AFD) desenvolvido em Python utilizando as bibliotecas `Tkinter` e  `ttkbootstrap`. O aplicativo permite ao usuário configurar um AFD, testar cadeias de entrada e visualizar os resultados de forma interativa. O sistema é dividido em várias páginas, permitindo uma navegação fácil entre as diferentes funcionalidades.
 
 ## Funcionalidades
 
