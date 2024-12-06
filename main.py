@@ -89,13 +89,13 @@ def mostrar_desenvolvedores():
     desenvolvedores_window.mainloop()
 
 
-# Interface Gráfica
+# Configuração da interface gráfica
 root = ttkb.Window(themename="superhero")  # Tema moderno
 root.title("Simulador de AFD")
 root.geometry("800x600")
 root.state('zoomed')  # Abrir em tela cheia
 
-# Criando o Notebook (abas)
+# Criando as abas
 notebook = ttk.Notebook(root)
 notebook.pack(fill='both', expand=True)
 
@@ -142,8 +142,7 @@ botao_configurar = ttk.Button(config_frame, text="Configurar AFD", style="TButto
 botao_configurar.pack(pady=10)
 
 
-
-# Aba 4 - Teste de Cadeias
+# Aba 3 - Teste de Cadeias
 teste_frame = ttk.Frame(notebook)
 notebook.add(teste_frame, text="Teste de Cadeias")
 
@@ -164,7 +163,7 @@ botao_remover.pack(pady=5)
 botao_testar = ttk.Button(teste_frame, text="Testar Cadeias", style="TButton", command=testar_cadeias)
 botao_testar.pack(pady=20, side=tk.BOTTOM)
 
-# Aba 3 - Desenvolvedores
+# Aba 4 - Desenvolvedores
 desenvolvedores_frame = ttk.Frame(notebook)
 notebook.add(desenvolvedores_frame, text="Desenvolvedores")
 
@@ -180,5 +179,5 @@ for colaborador in colaboradores:
 # Inicializar o AFD como None
 afd = None
 
-# Rodar a interface
+# Iniciar a interface gráfica
 root.mainloop()
