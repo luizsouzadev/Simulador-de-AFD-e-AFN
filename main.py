@@ -1,7 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox
-import ttkbootstrap as ttkb
+from tkinter import ttk, messagebox
 
 class AFD:
     def __init__(self, estados, alfabeto, transicoes, estado_inicial, estados_aceitacao):
@@ -14,170 +12,143 @@ class AFD:
     def processa_cadeia(self, cadeia):
         estado_atual = self.estado_inicial
         for simbolo in cadeia:
-            if simbolo not in self.alfabeto:
-                return f"Símbolo inválido: {simbolo}"
             estado_atual = self.transicoes.get((estado_atual, simbolo))
             if estado_atual is None:
-                return "Cadeia rejeitada (transição não definida)"
+                return "Cadeia rejeitada"
         return "Cadeia aceita" if estado_atual in self.estados_aceitacao else "Cadeia rejeitada"
 
+class AFND:
+    def __init__(self, estados, alfabeto, transicoes, estado_inicial, estados_aceitacao):
+        self.estados = estados
+        self.alfabeto = alfabeto
+        self.transicoes = transicoes
+        self.estado_inicial = estado_inicial
+        self.estados_aceitacao = estados_aceitacao
 
+    def processa_cadeia(self, cadeia):
+        def epsilon_closure(estados):
+            """Calcula o fecho-ε dos estados fornecidos."""
+            stack = list(estados)
+            closure = set(estados)
+
+            while stack:
+                estado = stack.pop()
+                for prox_estado in self.transicoes.get((estado, ""), []):
+                    if prox_estado not in closure:
+                        closure.add(prox_estado)
+                        stack.append(prox_estado)
+
+            return closure
+
+        def processar(estados_atuais, cadeia_restante):
+            if not cadeia_restante:
+                return any(estado in self.estados_aceitacao for estado in estados_atuais)
+
+            simbolo = cadeia_restante[0]
+            proximos_estados = set()
+
+            for estado in estados_atuais:
+                proximos_estados.update(self.transicoes.get((estado, simbolo), []))
+
+            if not proximos_estados:
+                return False
+
+            proximos_estados = epsilon_closure(proximos_estados)
+            return processar(proximos_estados, cadeia_restante[1:])
+
+        estados_iniciais = epsilon_closure({self.estado_inicial})
+        return "Cadeia aceita" if processar(estados_iniciais, cadeia) else "Cadeia rejeitada"
+
+# Interface gráfica com Tkinter
 def criar_afd():
     try:
-        estados = set(entrada_estados.get().split(","))
-        alfabeto = set(entrada_alfabeto.get().split(","))
-        estado_inicial = entrada_estado_inicial.get()
-        estados_aceitacao = set(entrada_estados_aceitacao.get().split(","))
+        estados = entry_estados.get().split(",")
+        alfabeto = entry_alfabeto.get().split(",")
+        estado_inicial = entry_estado_inicial.get()
+        estados_aceitacao = entry_estados_aceitacao.get().split(",")
 
-        transicoes_raw = entrada_transicoes.get("1.0", tk.END).strip().split("\n")
+        transicoes_raw = text_transicoes.get("1.0", tk.END).strip().split("\n")
         transicoes = {}
         for transicao in transicoes_raw:
-            origem, simbolo, destino = transicao.split(",")
-            transicoes[(origem.strip(), simbolo.strip())] = destino.strip()
+            origem, simbolo, destinos = transicao.split(",")
+            destinos = destinos.strip().split(";")
+            transicoes.setdefault((origem.strip(), simbolo.strip()), []).extend(destinos)
 
-        global afd
-        afd = AFD(estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
-        messagebox.showinfo("Sucesso", "AFD configurado com sucesso!")
+        tipo = tipo_automato.get()
+        global automato
+        if tipo == "AFD":
+            automato = AFD(estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
+        elif tipo == "AFND":
+            automato = AFND(estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
+
+        messagebox.showinfo("Sucesso", f"{tipo} configurado com sucesso!")
     except Exception as e:
-        messagebox.showerror("Erro", f"Erro ao configurar o AFD: {e}")
+        messagebox.showerror("Erro", f"Erro ao configurar o automato: {e}")
 
+def processar_cadeia():
+    try:
+        cadeia = entry_cadeia.get()
+        resultado = automato.processa_cadeia(cadeia)
+        messagebox.showinfo("Resultado", resultado)
+    except Exception as e:
+        messagebox.showerror("Erro", f"Erro ao processar a cadeia: {e}")
 
-def testar_cadeias():
-    if afd is None:
-        messagebox.showerror("Erro", "Configure o AFD antes de testar cadeias.")
-        return
+# Configuração da janela principal
+root = tk.Tk()
+root.title("Simulador de AFD e AFND")
 
-    resultados = []
-    for entrada in entradas_cadeias:
-        cadeia = entrada.get()
-        resultado = afd.processa_cadeia(cadeia)
-        resultados.append(f"Cadeia: {cadeia} - Resultado: {resultado}\n")  
+frame = ttk.Frame(root, padding="10")
+frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
-    messagebox.showinfo("Resultados", "".join(resultados))  
+# Entrada de estados
+label_estados = ttk.Label(frame, text="Estados (separados por vírgula):")
+label_estados.grid(row=0, column=0, sticky=tk.W)
+entry_estados = ttk.Entry(frame, width=30)
+entry_estados.grid(row=0, column=1, sticky=tk.W)
 
+# Entrada do alfabeto
+label_alfabeto = ttk.Label(frame, text="Alfabeto (separado por vírgula):")
+label_alfabeto.grid(row=1, column=0, sticky=tk.W)
+entry_alfabeto = ttk.Entry(frame, width=30)
+entry_alfabeto.grid(row=1, column=1, sticky=tk.W)
 
-def adicionar_cadeia():
-    nova_entrada = ttk.Entry(frame_cadeias, width=50)
-    nova_entrada.pack(pady=5)
-    entradas_cadeias.append(nova_entrada)
+# Estado inicial
+label_estado_inicial = ttk.Label(frame, text="Estado inicial:")
+label_estado_inicial.grid(row=2, column=0, sticky=tk.W)
+entry_estado_inicial = ttk.Entry(frame, width=30)
+entry_estado_inicial.grid(row=2, column=1, sticky=tk.W)
 
+# Estados de aceitação
+label_estados_aceitacao = ttk.Label(frame, text="Estados finais (separados por vírgula):")
+label_estados_aceitacao.grid(row=3, column=0, sticky=tk.W)
+entry_estados_aceitacao = ttk.Entry(frame, width=30)
+entry_estados_aceitacao.grid(row=3, column=1, sticky=tk.W)
 
-def remover_cadeia():
-    if entradas_cadeias:
-        ultima_entrada = entradas_cadeias.pop()
-        ultima_entrada.destroy()
-    else:
-        messagebox.showinfo("Aviso", "Não há mais cadeias para remover.")
+# Tipo de automato
+label_tipo = ttk.Label(frame, text="Tipo de Autômato:")
+label_tipo.grid(row=4, column=0, sticky=tk.W)
+tipo_automato = ttk.Combobox(frame, values=["AFD", "AFND"], state="readonly")
+tipo_automato.grid(row=4, column=1, sticky=tk.W)
+tipo_automato.set("AFD")
 
+# Transições
+label_transicoes = ttk.Label(frame, text="Transições (origem,símbolo,destino;destino2):")
+label_transicoes.grid(row=5, column=0, sticky=tk.W)
+text_transicoes = tk.Text(frame, height=5, width=40)
+text_transicoes.grid(row=5, column=1, sticky=tk.W)
 
-def mostrar_desenvolvedores():
-    desenvolvedores_window = ttkb.Window(themename="superhero")
-    desenvolvedores_window.title("Desenvolvedores")
-    desenvolvedores_window.geometry("400x300")
+# Botão para criar o autômato
+button_criar = ttk.Button(frame, text="Criar Autômato", command=criar_afd)
+button_criar.grid(row=6, column=0, columnspan=2)
 
-    label_desenvolvedores = ttk.Label(desenvolvedores_window, text="Colaboradores do Projeto", font=("Arial", 16, "bold"))
-    label_desenvolvedores.pack(pady=20)
+# Entrada de cadeia
+label_cadeia = ttk.Label(frame, text="Cadeia a ser processada:")
+label_cadeia.grid(row=7, column=0, sticky=tk.W)
+entry_cadeia = ttk.Entry(frame, width=30)
+entry_cadeia.grid(row=7, column=1, sticky=tk.W)
 
-    colaboradores = ["Nome do Colaborador 1", "Nome do Colaborador 2", "Nome do Colaborador 3"]  # Adicione os nomes dos colaboradores aqui
-    for colaborador in colaboradores:
-        label = ttk.Label(desenvolvedores_window, text=colaborador, font=("Arial", 14))
-        label.pack(pady=5)
+# Botão para processar a cadeia
+button_processar = ttk.Button(frame, text="Processar Cadeia", command=processar_cadeia)
+button_processar.grid(row=8, column=0, columnspan=2)
 
-    botao_fechar = ttk.Button(desenvolvedores_window, text="Fechar", style="TButton", command=desenvolvedores_window.destroy)
-    botao_fechar.pack(pady=20)
-
-    desenvolvedores_window.mainloop()
-
-
-# Configuração da interface gráfica
-root = ttkb.Window(themename="superhero")  # Tema moderno
-root.title("Simulador de AFD")
-root.geometry("800x600")
-root.state('zoomed')  # Abrir em tela cheia
-
-# Criando as abas
-notebook = ttk.Notebook(root)
-notebook.pack(fill='both', expand=True)
-
-# Aba 1 - Menu
-menu_frame = ttk.Frame(notebook)
-notebook.add(menu_frame, text="Menu")
-
-titulo_menu = ttk.Label(menu_frame, text="Bem-vindo ao Simulador de AFD", font=("Arial", 18, "bold"))
-titulo_menu.pack(pady=20)
-
-# Aba 2 - Configuração do AFD
-config_frame = ttk.Frame(notebook)
-notebook.add(config_frame, text="Configurar AFD")
-
-titulo_config = ttk.Label(config_frame, text="Configuração do AFD", font=("Arial", 18, "bold"), anchor="center")
-titulo_config.pack(pady=20)
-
-label_estados = ttk.Label(config_frame, text="Estados (separados por vírgulas):")
-label_estados.pack()
-entrada_estados = ttk.Entry(config_frame, width=50)
-entrada_estados.pack(pady=5)
-
-label_alfabeto = ttk.Label(config_frame, text="Alfabeto (separados por vírgulas):")
-label_alfabeto.pack()
-entrada_alfabeto = ttk.Entry(config_frame, width=50)
-entrada_alfabeto.pack(pady=5)
-
-label_estado_inicial = ttk.Label(config_frame, text="Estado Inicial:")
-label_estado_inicial.pack()
-entrada_estado_inicial = ttk.Entry(config_frame, width=50)
-entrada_estado_inicial.pack(pady=5)
-
-label_estados_aceitacao = ttk.Label(config_frame, text="Estados de Aceitação (separados por vírgulas):")
-label_estados_aceitacao.pack()
-entrada_estados_aceitacao = ttk.Entry(config_frame, width=50)
-entrada_estados_aceitacao.pack(pady=5)
-
-label_transicoes = ttk.Label(config_frame, text="Transições (formato: origem,símbolo,destino por linha):")
-label_transicoes.pack()
-entrada_transicoes = tk.Text(config_frame, width=50, height=8, font=("Arial", 12))
-entrada_transicoes.pack(pady=5)
-
-botao_configurar = ttk.Button(config_frame, text="Configurar AFD", style="TButton", command=criar_afd)
-botao_configurar.pack(pady=10)
-
-
-# Aba 3 - Teste de Cadeias
-teste_frame = ttk.Frame(notebook)
-notebook.add(teste_frame, text="Teste de Cadeias")
-
-titulo_teste = ttk.Label(teste_frame, text="Teste de Cadeias", font=("Arial", 18, "bold"))
-titulo_teste.pack(pady=20)
-
-frame_cadeias = ttk.Frame(teste_frame)
-frame_cadeias.pack(pady=10)
-
-entradas_cadeias = []
-
-botao_adicionar = ttk.Button(teste_frame, text="Adicionar Cadeia", style="TButton", command=adicionar_cadeia)
-botao_adicionar.pack(pady=5)
-
-botao_remover = ttk.Button(teste_frame, text="Remover Cadeia", style="TButton", command=remover_cadeia)
-botao_remover.pack(pady=5)
-
-botao_testar = ttk.Button(teste_frame, text="Testar Cadeias", style="TButton", command=testar_cadeias)
-botao_testar.pack(pady=20, side=tk.BOTTOM)
-
-# Aba 4 - Desenvolvedores
-desenvolvedores_frame = ttk.Frame(notebook)
-notebook.add(desenvolvedores_frame, text="Desenvolvedores")
-
-titulo_desenvolvedores = ttk.Label(desenvolvedores_frame, text="Colaboradores do Projeto", font=("Arial", 18, "bold"))
-titulo_desenvolvedores.pack(pady=20)
-
-colaboradores = ["LUIZ FELIPE DA COSTA SOUZA", "LUIZ HENRIQUE ALVES FERREIRA", "NEFI ANGELO DIAS DA COSTA", "VINICIUS EDUARDO FREITAS DE SALES", "GABRIEL FILIPE DA SILVA FERNANDES"]
-for colaborador in colaboradores:
-    label = ttk.Label(desenvolvedores_frame, text=colaborador, font=("Arial", 14))
-    label.pack(pady=5)
-
-    
-# Inicializar o AFD como None
-afd = None
-
-# Iniciar a interface gráfica
 root.mainloop()
