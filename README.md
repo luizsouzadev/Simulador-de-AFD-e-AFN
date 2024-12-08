@@ -1,6 +1,5 @@
 # Simulador de AFD e AFN
 
-=======
 Este projeto é um simulador de Autômatos Finitos Determinísticos (AFD) e Autômatos Finitos Não Determinísticos (AFD) desenvolvido em Python utilizando a biblioteca `Tkinter`. O aplicativo permite ao usuário configurar um AFD ou AFN, testar cadeias de entrada e visualizar os resultados de forma interativa.
 
 
