@@ -60,7 +60,7 @@ class AFND:
         return "Cadeia aceita" if processar(estados_iniciais, cadeia) else "Cadeia rejeitada"
 
 # Interface gráfica com Tkinter
-def criar_afd():
+def criar_automato():
     try:
         estados = entry_estados.get().split(",")
         alfabeto = entry_alfabeto.get().split(",")
@@ -69,12 +69,23 @@ def criar_afd():
 
         transicoes_raw = text_transicoes.get("1.0", tk.END).strip().split("\n")
         transicoes = {}
+        tipo = tipo_automato.get()
+
         for transicao in transicoes_raw:
             origem, simbolo, destinos = transicao.split(",")
-            destinos = destinos.strip().split(";")
-            transicoes.setdefault((origem.strip(), simbolo.strip()), []).extend(destinos)
+            origem = origem.strip()
+            simbolo = simbolo.strip()
+            destinos = destinos.strip()
 
-        tipo = tipo_automato.get()
+            if tipo == "AFD":
+                # Certifique-se de que apenas um destino seja atribuído
+                if ";" in destinos:
+                    raise ValueError("No AFD, cada transição deve ter exatamente um destino.")
+                transicoes[(origem, simbolo)] = destinos
+            elif tipo == "AFND":
+                # Permita múltiplos destinos para AFND
+                transicoes.setdefault((origem, simbolo), []).extend(destinos.split(";"))
+
         global automato
         if tipo == "AFD":
             automato = AFD(estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
@@ -138,7 +149,7 @@ text_transicoes = tk.Text(frame, height=5, width=40)
 text_transicoes.grid(row=5, column=1, sticky=tk.W)
 
 # Botão para criar o autômato
-button_criar = ttk.Button(frame, text="Criar Autômato", command=criar_afd)
+button_criar = ttk.Button(frame, text="Criar Autômato", command=criar_automato)
 button_criar.grid(row=6, column=0, columnspan=2)
 
 # Entrada de cadeia
