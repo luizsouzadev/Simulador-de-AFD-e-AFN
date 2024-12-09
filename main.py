@@ -26,8 +26,8 @@ class AFND:
         self.estados_aceitacao = estados_aceitacao
 
     def processa_cadeia(self, cadeia):
-        def epsilon_closure(estados):
-            """Calcula o fecho-ε dos estados fornecidos."""
+        def fecho_lambda(estados):
+            # Calcula o fecho-lambda dos estados fornecidos.
             stack = list(estados)
             closure = set(estados)
 
@@ -53,10 +53,10 @@ class AFND:
             if not proximos_estados:
                 return False
 
-            proximos_estados = epsilon_closure(proximos_estados)
+            proximos_estados = fecho_lambda(proximos_estados)
             return processar(proximos_estados, cadeia_restante[1:])
 
-        estados_iniciais = epsilon_closure({self.estado_inicial})
+        estados_iniciais = fecho_lambda({self.estado_inicial})
         return "Cadeia aceita" if processar(estados_iniciais, cadeia) else "Cadeia rejeitada"
 
 # Interface gráfica com Tkinter
@@ -78,12 +78,12 @@ def criar_automato():
             destinos = destinos.strip()
 
             if tipo == "AFD":
-                # Certifique-se de que apenas um destino seja atribuído
+                # Certifica que apenas um estado vai ser atribuido para o AFD
                 if ";" in destinos:
                     raise ValueError("No AFD, cada transição deve ter exatamente um destino.")
                 transicoes[(origem, simbolo)] = destinos
             elif tipo == "AFND":
-                # Permita múltiplos destinos para AFND
+                # Permite múltiplos destinos para AFND
                 transicoes.setdefault((origem, simbolo), []).extend(destinos.split(";"))
 
         global automato
@@ -129,7 +129,7 @@ label_estado_inicial.grid(row=2, column=0, sticky=tk.W)
 entry_estado_inicial = ttk.Entry(frame, width=30)
 entry_estado_inicial.grid(row=2, column=1, sticky=tk.W)
 
-# Estados de aceitação
+# Estados finais
 label_estados_aceitacao = ttk.Label(frame, text="Estados finais (separados por vírgula):")
 label_estados_aceitacao.grid(row=3, column=0, sticky=tk.W)
 entry_estados_aceitacao = ttk.Entry(frame, width=30)
